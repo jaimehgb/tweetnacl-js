@@ -9,6 +9,18 @@ to JavaScript for modern browsers and Node.js. Public domain.
 
 Demo: <https://dchest.github.io/tweetnacl-js/>
 
+jaimehgb Fork Info
+=============
+
+I needed a ed25519 JS library whose hashing function was BLAKE2 to 
+be compatible with [RaiBlocks](https://github.com/clemahieu/raiblocks) signing
+system. I've just changed crypto_sign* functions with that purpose, and added a 
+new function to derive the public key having just the 32 bytes secret key.
+Note that signatures made with this fork wont match the ones made with most of 
+other ed25519 libraries and implementations.
+
+This library now depends on [BLAKEjs](https://github.com/dcposch/blakejs).
+
 Documentation
 =============
 

@@ -1130,7 +1130,7 @@ nacl.sign.keyPair.fromSecretKey = function(secretKey) {
   if (secretKey.length !== crypto_sign_SECRETKEYBYTES)
     throw new Error('bad secret key size');
   var pk = new Uint8Array(crypto_sign_PUBLICKEYBYTES);
-  for (var i = 0; i < pk.length; i++) pk[i] = secretKey[32+i];
+  pk = derivePublicFromSecret(secretKey);
   return {publicKey: pk, secretKey: new Uint8Array(secretKey)};
 };
 

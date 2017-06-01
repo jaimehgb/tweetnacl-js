@@ -707,16 +707,38 @@ function crypto_sign_keypair(pk, sk, seeded) {
   var i;
 
   if (!seeded) randombytes(sk, 32);
-  crypto_hash(d, sk, 32);
+  
+  var context = blake2bInit(64);
+  blake2bUpdate(context, sk);
+  d = blake2bFinal(context);
+  
   d[0] &= 248;
   d[31] &= 127;
   d[31] |= 64;
-
+  
   scalarbase(p, d);
   pack(pk, p);
 
-  for (i = 0; i < 32; i++) sk[i+32] = pk[i];
   return 0;
+}
+
+function derivePublicFromSecret(sk)
+{
+  var d = new Uint8Array(64);
+  var p = [gf(), gf(), gf(), gf()];
+  var i;
+  var pk = new Uint8Array(32);
+  var context = blake2bInit(64);
+  blake2bUpdate(context, sk);
+  d = blake2bFinal(context);
+  
+  d[0] &= 248;
+  d[31] &= 127;
+  d[31] |= 64;
+  
+  scalarbase(p, d);
+  pack(pk, p);
+  return pk;
 }
 
 var L = new Float64Array([0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58, 0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x10]);
@@ -758,8 +780,12 @@ function crypto_sign(sm, m, n, sk) {
   var d = new Uint8Array(64), h = new Uint8Array(64), r = new Uint8Array(64);
   var i, j, x = new Float64Array(64);
   var p = [gf(), gf(), gf(), gf()];
+  
+  var pk = derivePublicFromSecret(sk);
 
-  crypto_hash(d, sk, 32);
+  var context = blake2bInit(64, null);
+  blake2bUpdate(context, sk);
+  d = blake2bFinal(context);
   d[0] &= 248;
   d[31] &= 127;
   d[31] |= 64;
@@ -768,13 +794,20 @@ function crypto_sign(sm, m, n, sk) {
   for (i = 0; i < n; i++) sm[64 + i] = m[i];
   for (i = 0; i < 32; i++) sm[32 + i] = d[32 + i];
 
-  crypto_hash(r, sm.subarray(32), n+32);
+  context = blake2bInit(64, null);
+  blake2bUpdate(context, sm.subarray(32));
+  r = blake2bFinal(context);
+  
   reduce(r);
   scalarbase(p, r);
   pack(sm, p);
 
-  for (i = 32; i < 64; i++) sm[i] = sk[i];
-  crypto_hash(h, sm, n + 64);
+  for (i = 32; i < 64; i++) sm[i] = pk[i-32];
+  
+  context = blake2bInit(64, null);
+  blake2bUpdate(context, sm);
+  h = blake2bFinal(context);
+  
   reduce(h);
 
   for (i = 0; i < 64; i++) x[i] = 0;
@@ -840,7 +873,12 @@ function crypto_sign_open(m, sm, n, pk) {
 
   for (i = 0; i < n; i++) m[i] = sm[i];
   for (i = 0; i < 32; i++) m[i+32] = pk[i];
-  crypto_hash(h, m, n);
+  //crypto_hash(h, m, n);
+  
+  context = blake2bInit(64, null);
+  blake2bUpdate(context, m);
+  h = blake2bFinal(context);
+  
   reduce(h);
   scalarmult(p, q, h);
 
@@ -873,7 +911,7 @@ var crypto_secretbox_KEYBYTES = 32,
     crypto_box_BOXZEROBYTES = crypto_secretbox_BOXZEROBYTES,
     crypto_sign_BYTES = 64,
     crypto_sign_PUBLICKEYBYTES = 32,
-    crypto_sign_SECRETKEYBYTES = 64,
+    crypto_sign_SECRETKEYBYTES = 32,
     crypto_sign_SEEDBYTES = 32,
     crypto_hash_BYTES = 64;
 

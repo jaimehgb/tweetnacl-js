@@ -875,7 +875,7 @@ function crypto_sign_open(m, sm, n, pk) {
   for (i = 0; i < 32; i++) m[i+32] = pk[i];
   //crypto_hash(h, m, n);
   
-  context = blake2bInit(64, null);
+  var context = blake2bInit(64, null);
   blake2bUpdate(context, m);
   h = blake2bFinal(context);
   

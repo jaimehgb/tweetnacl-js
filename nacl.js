@@ -16,6 +16,8 @@ var gf = function(init) {
 
 //  Pluggable, initialized in high-level API below.
 var randombytes = function(/* x, n */) { throw new Error('no PRNG'); };
+  
+var blake = require('blakejs');
 
 var _0 = new Uint8Array(16);
 var _9 = new Uint8Array(32); _9[0] = 9;
@@ -708,9 +710,9 @@ function crypto_sign_keypair(pk, sk, seeded) {
 
   if (!seeded) randombytes(sk, 32);
   
-  var context = blake2bInit(64);
-  blake2bUpdate(context, sk);
-  d = blake2bFinal(context);
+  var context = blake.blake2bInit(64);
+  blake.blake2bUpdate(context, sk);
+  d = blake.blake2bFinal(context);
   
   d[0] &= 248;
   d[31] &= 127;
@@ -728,9 +730,9 @@ function derivePublicFromSecret(sk)
   var p = [gf(), gf(), gf(), gf()];
   var i;
   var pk = new Uint8Array(32);
-  var context = blake2bInit(64);
-  blake2bUpdate(context, sk);
-  d = blake2bFinal(context);
+  var context = blake.blake2bInit(64);
+  blake.blake2bUpdate(context, sk);
+  d = blake.blake2bFinal(context);
   
   d[0] &= 248;
   d[31] &= 127;
@@ -783,9 +785,9 @@ function crypto_sign(sm, m, n, sk) {
   
   var pk = derivePublicFromSecret(sk);
 
-  var context = blake2bInit(64, null);
-  blake2bUpdate(context, sk);
-  d = blake2bFinal(context);
+  var context = blake.blake2bInit(64, null);
+  blake.blake2bUpdate(context, sk);
+  d = blake.blake2bFinal(context);
   d[0] &= 248;
   d[31] &= 127;
   d[31] |= 64;
@@ -794,9 +796,9 @@ function crypto_sign(sm, m, n, sk) {
   for (i = 0; i < n; i++) sm[64 + i] = m[i];
   for (i = 0; i < 32; i++) sm[32 + i] = d[32 + i];
 
-  context = blake2bInit(64, null);
-  blake2bUpdate(context, sm.subarray(32));
-  r = blake2bFinal(context);
+  context = blake.blake2bInit(64, null);
+  blake.blake2bUpdate(context, sm.subarray(32));
+  r = blake.blake2bFinal(context);
   
   reduce(r);
   scalarbase(p, r);
@@ -804,9 +806,9 @@ function crypto_sign(sm, m, n, sk) {
 
   for (i = 32; i < 64; i++) sm[i] = pk[i-32];
   
-  context = blake2bInit(64, null);
-  blake2bUpdate(context, sm);
-  h = blake2bFinal(context);
+  context = blake.blake2bInit(64, null);
+  blake.blake2bUpdate(context, sm);
+  h = blake.blake2bFinal(context);
   
   reduce(h);
 
@@ -875,9 +877,9 @@ function crypto_sign_open(m, sm, n, pk) {
   for (i = 0; i < 32; i++) m[i+32] = pk[i];
   //crypto_hash(h, m, n);
   
-  var context = blake2bInit(64, null);
-  blake2bUpdate(context, m);
-  h = blake2bFinal(context);
+  var context = blake.blake2bInit(64, null);
+  blake.blake2bUpdate(context, m);
+  h = blake.blake2bFinal(context);
   
   reduce(h);
   scalarmult(p, q, h);

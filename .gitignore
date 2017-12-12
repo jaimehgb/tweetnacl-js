@@ -13,3 +13,5 @@ test/c/csign.o
 test/c/csign-keypair
 test/c/csign-keypair.o
 test/c/tweetnacl.o
+/.idea/
+.DS_Store
